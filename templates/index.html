@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Weather App</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f8ff;
+            color: #333;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            color: #007acc;
+            margin-bottom: 20px;
+        }
+
+        form {
+            margin-bottom: 30px;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            width: 300px;
+            border: 2px solid #007acc;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #007acc;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        button:hover {
+            background-color: #005f99;
+        }
+
+        .weather, .forecast {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+            display: inline-block;
+            text-align: left;
+            max-width: 500px;
+        }
+
+        .weather h2, .forecast h2 {
+            color: #007acc;
+        }
+
+        .forecast ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .forecast li {
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .forecast li:last-child {
+            border-bottom: none;
+        }
+
+        img {
+            vertical-align: middle;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Weather App</h1>
+        <p>Developed by Ayush Nilesh Sojitra</p>
+    </header>
+    <form method="GET" action="/weather">
+        <input type="text" name="city" placeholder="Enter city name" required>
+        <button type="submit">Get Weather</button>
+    </form>
+    <button onclick="showInfo()">Info</button>
+    <button onclick="getLocation()">Get Weather By Location</button>
+
+    <div class="weather">
+        {% if weather %}
+            <h2>Current Weather in {{ weather.name }}</h2>
+            <p>Temperature: {{ weather.main.temp }}°C</p>
+            <p>Humidity: {{ weather.main.humidity }}%</p>
+            <p>Wind Speed: {{ weather.wind.speed }} m/s</p>
+            <img src="http://openweathermap.org/img/wn/{{ weather.weather[0].icon }}@2x.png" alt="Weather Icon">
+        {% endif %}
+    </div>
+
+    <div class="forecast">
+    {% if forecast %}
+        <h2>5-Day Forecast</h2>
+        <ul>
+            {% for item in forecast.list %}
+                <li>
+                    <strong>{{ item.dt_txt.split(' ')[0] }}</strong>: {{ item.main.temp }}°C, {{ item.weather[0].description }}
+                    <img src="http://openweathermap.org/img/wn/{{ item.weather[0].icon }}.png" alt="Forecast Icon">
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</div>
+<footer>
+        <p>&copy; 2024 Ayush Nilesh Sojitra. All rights reserved.</p>
+</footer>
+
+    <script>
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showPosition);
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
+        }
+
+        function showPosition(position) {
+            fetch('/geolocation', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.querySelector('.weather').innerHTML = `
+                    <h2>Current Weather in ${data.city}</h2>
+                    <p>Temperature: ${data.weather.main.temp}°C</p>
+                    <p>Humidity: ${data.weather.main.humidity}%</p>
+                    <p>Wind Speed: ${data.weather.wind.speed} m/s</p>
+                    <img src="http://openweathermap.org/img/wn/${data.weather.weather[0].icon}@2x.png" alt="Weather Icon">
+                `;
+                let forecastHTML = '<h2>5-Day Forecast</h2><ul>';
+                data.forecast.list.forEach(item => {
+                    forecastHTML += `<li>
+                        <strong>${item.dt_txt}</strong>: ${item.main.temp}°C, ${item.weather[0].description}
+                        <img src="http://openweathermap.org/img/wn/${item.weather[0].icon}.png" alt="Forecast Icon">
+                    </li>`;
+                });
+                forecastHTML += '</ul>';
+                document.querySelector('.forecast').innerHTML = forecastHTML;
+            })
+            .catch(error => console.error('Error fetching weather data:', error));
+        }
+        function showInfo(){
+            alert("The Product Manager Accelerator Program is designed to support PM professionals through every stage of their career. From students looking for entry-level jobs to Directors looking to take on a leadership role, our program has helped over hundreds of students fulfill their career aspirations.");
+        }
+    </script>
+</body>
+</html>
